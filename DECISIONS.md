@@ -22,14 +22,14 @@ Los Enums (`app/Enums`) implementan `HasLabel`/`HasColor`/`HasIcon` de Filament 
 
 ## ¿Cómo conectarías OpenAI sin acoplarlo al sistema?
 
-El "Desafío de arquitectura para IA" ya está resuelto con esto en mente: `ExecutiveSummaryServiceInterface` es el único contrato que el resto de la app conoce (`App\Filament\Pages\Dashboard` solo llama `app(ExecutiveSummaryServiceInterface::class)->generate()`). Para conectar OpenAI:
+El "Desafío de arquitectura para IA" ya está resuelto con esto en mente, y de hecho ya se conectó un proveedor real (Gemini, no OpenAI, pero el ejercicio es idéntico) para demostrarlo:
 
-1. Crear `App\Services\ExecutiveSummary\OpenAiExecutiveSummaryService implements ExecutiveSummaryServiceInterface`, que arme un prompt con los mismos datos que hoy usa `DashboardMetricsService` (para no duplicar consultas) y devuelva el mismo DTO `ExecutiveSummaryResult`.
-2. Guardar la API key en `.env` / `config/services.php` (nunca en código), y usar el cliente HTTP de Laravel (`Illuminate\Http\Client`) con timeout y manejo de errores explícito.
-3. Cambiar **una línea** en `AppServiceProvider::register()`: el `bind(ExecutiveSummaryServiceInterface::class, ...)` pasa de `LocalExecutiveSummaryService` a `OpenAiExecutiveSummaryService`. Ideal hacerlo condicional a una variable de entorno (`config('services.openai.key')` presente) para poder alternar entre ambas sin re-deploy.
-4. Si se quiere resiliencia, un `FallbackExecutiveSummaryService implements ExecutiveSummaryServiceInterface` que intente OpenAI y caiga al motor local si la llamada falla — decorador sobre el mismo contrato, cero cambios en Filament.
+1. `App\Services\ExecutiveSummary\GeminiExecutiveSummaryService implements ExecutiveSummaryServiceInterface` arma un prompt con los mismos datos que ya calcula `DashboardMetricsService` (no duplica consultas), le pide a Gemini una respuesta JSON con `responseSchema` (headline/body/highlights) y la mapea al mismo DTO `ExecutiveSummaryResult` que usa el motor local.
+2. La API key vive en `.env` (`GEMINI_API_KEY`) → `config/services.php` → constructor, nunca hardcodeada. Usa el cliente HTTP de Laravel (`Http::timeout()->retry()`) y convierte cualquier fallo (red, credenciales, formato de respuesta) en `ExecutiveSummaryGenerationException`.
+3. `App\Services\ExecutiveSummary\FallbackExecutiveSummaryService` es un decorador del mismo contrato: intenta el proveedor primario y, si lanza excepción, cae automáticamente al motor local (`report()` deja el fallo en los logs, pero el usuario del panel nunca ve un error).
+4. `AppServiceProvider::register()` es el único lugar que decide: sin `GEMINI_API_KEY` en `.env`, se bindea solo `LocalExecutiveSummaryService` (comportamiento exacto de antes); con la key presente, bindea `FallbackExecutiveSummaryService` envolviendo Gemini + local.
 
-Nada en `App\Filament\Pages\Dashboard`, en la vista del modal, ni en ningún test que use el contrato necesitaría cambiar.
+Para conectar OpenAI en vez de (o además de) Gemini, el patrón es idéntico: una clase nueva `OpenAiExecutiveSummaryService implements ExecutiveSummaryServiceInterface`, y ajustar el `bind()` de `AppServiceProvider`. Nada en `App\Filament\Pages\Dashboard`, en la vista del modal, ni en ningún test que use el contrato necesitaría cambiar — de hecho, los tests de `LocalExecutiveSummaryServiceTest` y `ExecutiveSummaryActionTest` no se tocaron al agregar Gemini.
 
 ## ¿Qué harías si este módulo tuviera 100.000 compromisos?
 

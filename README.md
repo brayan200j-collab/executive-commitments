@@ -51,7 +51,7 @@ app/
   Actions/           Generacion de codigos, registro de auditoria,
                      creacion de compromisos
   Services/          RiskLevelResolver, DashboardMetricsService,
-                     ExecutiveSummaryServiceInterface + implementacion local
+                     ExecutiveSummaryServiceInterface + Local/Gemini/Fallback
   Policies/          MeetingPolicy, CommitmentPolicy, RiskPolicy
   Filament/          Resources, Widgets y Pages del panel
 ```
@@ -67,7 +67,22 @@ La lógica de negocio vive en `Actions`/`Services`/`Observers`, no en los Resour
 
 ## Resumen ejecutivo (botón "Generar resumen ejecutivo")
 
-El dashboard incluye un botón que abre un modal con un resumen generado por `App\Services\ExecutiveSummary\LocalExecutiveSummaryService`, implementación de `ExecutiveSummaryServiceInterface` que redacta el resumen con reglas sobre los datos reales de la base de datos (sin llamar a ningún proveedor externo). Ver `DECISIONS.md` para cómo se conectaría un proveedor de IA externo sin tocar el resto del sistema.
+El dashboard incluye un botón que abre un modal con un resumen generado a través de `ExecutiveSummaryServiceInterface`. Hay dos implementaciones:
+
+- **`LocalExecutiveSummaryService`** (por defecto): redacta el resumen con reglas sobre los datos reales, sin llamar a ningún proveedor externo. No requiere configuración.
+- **`GeminiExecutiveSummaryService`** (opcional): le pide el resumen a la API de Gemini (Google AI Studio) con salida JSON estructurada.
+
+### Activar Gemini
+
+1. Consigue una API key gratuita en **aistudio.google.com/apikey**.
+2. Agrega en tu `.env`:
+   ```
+   GEMINI_API_KEY=tu-api-key
+   GEMINI_MODEL=gemini-2.0-flash
+   ```
+3. Listo — no hay que tocar código. `AppServiceProvider` detecta la key y activa Gemini automáticamente, envuelto en `FallbackExecutiveSummaryService`: si la llamada a Gemini falla (sin internet, key inválida, rate limit), cae solo al motor local y el usuario nunca ve un error. Sin la key, el comportamiento es exactamente el mismo de antes (solo motor local).
+
+Ver `DECISIONS.md` para el detalle de cómo está armado el contrato y cómo se conectaría otro proveedor (ej. OpenAI) siguiendo el mismo patrón.
 
 ## Tests
 
@@ -75,7 +90,7 @@ El dashboard incluye un botón que abre un modal con un resumen generado por `Ap
 php artisan test
 ```
 
-32 tests cubren: acceso a cada módulo del panel, flujos completos de creación (compromiso y riesgo) vía Livewire, la matriz completa de `RiskLevelResolver`, los casos límite de `isOverdue`, `DashboardMetricsService`, `LocalExecutiveSummaryService`, y una regresión sobre generación de códigos en creación en lote.
+40 tests cubren: acceso a cada módulo del panel, flujos completos de creación (compromiso y riesgo) vía Livewire, edición de cada recurso, filtros de tabla, la matriz completa de `RiskLevelResolver`, los casos límite de `isOverdue`, `DashboardMetricsService`, `LocalExecutiveSummaryService`, `GeminiExecutiveSummaryService` y `FallbackExecutiveSummaryService` (con `Http::fake()`, sin llamadas reales a red), y una regresión sobre generación de códigos en creación en lote.
 
 ## Nota sobre el entorno de desarrollo local
 
