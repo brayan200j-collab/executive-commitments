@@ -17,12 +17,12 @@ class RiskFactory extends Factory
     public function definition(): array
     {
         return [
-            'description' => fake()->sentence(14),
-            'probability' => fake()->randomElement(RiskProbability::cases())->value,
-            'impact' => fake()->randomElement(RiskImpact::cases())->value,
+            'description' => $this->faker->sentence(14),
+            'probability' => $this->faker->randomElement(RiskProbability::cases())->value,
+            'impact' => $this->faker->randomElement(RiskImpact::cases())->value,
             // 'code' lo asigna RiskObserver::creating(), 'level' lo calcula RiskObserver::saving().
             'responsible_id' => User::factory(),
-            'status' => fake()->randomElement(RiskStatus::cases())->value,
+            'status' => $this->faker->randomElement(RiskStatus::cases())->value,
         ];
     }
 

@@ -19,8 +19,8 @@ class CommitmentStatusHistoryFactory extends Factory
             'commitment_id' => Commitment::factory(),
             'user_id' => User::factory(),
             'old_status' => null,
-            'new_status' => fake()->randomElement(CommitmentStatus::cases())->value,
-            'created_at' => fake()->dateTimeBetween('-1 month', 'now'),
+            'new_status' => $this->faker->randomElement(CommitmentStatus::cases())->value,
+            'created_at' => $this->faker->dateTimeBetween('-1 month', 'now'),
         ];
     }
 }

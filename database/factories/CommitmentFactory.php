@@ -18,21 +18,21 @@ class CommitmentFactory extends Factory
     {
         return [
             'meeting_id' => Meeting::factory(),
-            'description' => fake()->sentence(12),
+            'description' => $this->faker->sentence(12),
             'responsible_id' => User::factory(),
-            'due_date' => fake()->dateTimeBetween('-3 weeks', '+6 weeks'),
-            'priority' => fake()->randomElement(CommitmentPriority::cases())->value,
-            'status' => fake()->randomElement(CommitmentStatus::cases())->value,
-            'progress_percentage' => fake()->numberBetween(0, 100),
-            'evidence' => fake()->boolean(40) ? fake()->sentence() : null,
+            'due_date' => $this->faker->dateTimeBetween('-3 weeks', '+6 weeks'),
+            'priority' => $this->faker->randomElement(CommitmentPriority::cases())->value,
+            'status' => $this->faker->randomElement(CommitmentStatus::cases())->value,
+            'progress_percentage' => $this->faker->numberBetween(0, 100),
+            'evidence' => $this->faker->boolean(40) ? $this->faker->sentence() : null,
         ];
     }
 
     public function overdue(): static
     {
         return $this->state(fn () => [
-            'due_date' => fake()->dateTimeBetween('-4 weeks', '-1 days'),
-            'status' => fake()->randomElement([
+            'due_date' => $this->faker->dateTimeBetween('-4 weeks', '-1 days'),
+            'status' => $this->faker->randomElement([
                 CommitmentStatus::Pendiente,
                 CommitmentStatus::EnProgreso,
                 CommitmentStatus::Bloqueado,
@@ -43,8 +43,8 @@ class CommitmentFactory extends Factory
     public function dueSoon(): static
     {
         return $this->state(fn () => [
-            'due_date' => fake()->dateTimeBetween('now', '+6 days'),
-            'status' => fake()->randomElement([
+            'due_date' => $this->faker->dateTimeBetween('now', '+6 days'),
+            'status' => $this->faker->randomElement([
                 CommitmentStatus::Pendiente,
                 CommitmentStatus::EnProgreso,
             ])->value,

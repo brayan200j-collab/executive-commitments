@@ -15,11 +15,11 @@ class MeetingFactory extends Factory
     public function definition(): array
     {
         return [
-            'title' => 'Comité de seguimiento '.fake()->monthName().' '.fake()->year(),
-            'date' => fake()->dateTimeBetween('-2 months', '+2 weeks'),
-            'organization' => fake()->company(),
+            'title' => 'Comité de seguimiento '.$this->faker->monthName().' '.$this->faker->year(),
+            'date' => $this->faker->dateTimeBetween('-2 months', '+2 weeks'),
+            'organization' => $this->faker->company(),
             'responsible_id' => User::factory(),
-            'status' => fake()->randomElement(MeetingStatus::cases())->value,
+            'status' => $this->faker->randomElement(MeetingStatus::cases())->value,
         ];
     }
 }
