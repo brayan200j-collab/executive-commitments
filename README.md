@@ -78,7 +78,7 @@ El dashboard incluye un botón que abre un modal con un resumen generado a trav�
 2. Agrega en tu `.env`:
    ```
    GEMINI_API_KEY=tu-api-key
-   GEMINI_MODEL=gemini-2.0-flash
+   GEMINI_MODEL=gemini-flash-latest
    ```
 3. Listo — no hay que tocar código. `AppServiceProvider` detecta la key y activa Gemini automáticamente, envuelto en `FallbackExecutiveSummaryService`: si la llamada a Gemini falla (sin internet, key inválida, rate limit), cae solo al motor local y el usuario nunca ve un error. Sin la key, el comportamiento es exactamente el mismo de antes (solo motor local).
 

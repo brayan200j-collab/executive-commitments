@@ -32,7 +32,7 @@ class GeminiExecutiveSummaryServiceTest extends TestCase
         $service = new GeminiExecutiveSummaryService(
             metrics: app(DashboardMetricsService::class),
             apiKey: 'fake-key',
-            model: 'gemini-2.0-flash',
+            model: 'gemini-flash-latest',
         );
 
         $summary = $service->generate();
@@ -41,7 +41,7 @@ class GeminiExecutiveSummaryServiceTest extends TestCase
         $this->assertSame(['Alerta 1', 'Alerta 2'], $summary->highlights);
         $this->assertStringContainsString('Gemini', $summary->providerName);
 
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'gemini-2.0-flash:generateContent')
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'gemini-flash-latest:generateContent')
             && str_contains($request->url(), 'key=fake-key'));
     }
 
@@ -53,7 +53,7 @@ class GeminiExecutiveSummaryServiceTest extends TestCase
 
         $this->expectException(ExecutiveSummaryGenerationException::class);
 
-        (new GeminiExecutiveSummaryService(app(DashboardMetricsService::class), 'bad-key', 'gemini-2.0-flash'))
+        (new GeminiExecutiveSummaryService(app(DashboardMetricsService::class), 'bad-key', 'gemini-flash-latest'))
             ->generate();
     }
 
@@ -67,7 +67,7 @@ class GeminiExecutiveSummaryServiceTest extends TestCase
 
         $this->expectException(ExecutiveSummaryGenerationException::class);
 
-        (new GeminiExecutiveSummaryService(app(DashboardMetricsService::class), 'fake-key', 'gemini-2.0-flash'))
+        (new GeminiExecutiveSummaryService(app(DashboardMetricsService::class), 'fake-key', 'gemini-flash-latest'))
             ->generate();
     }
 }
