@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Actions\Commitments\GenerateCommitmentCodeAction;
 use App\Actions\Commitments\RecordCommitmentStatusChangeAction;
 use App\Enums\CommitmentStatus;
 use App\Models\Commitment;
@@ -18,8 +19,26 @@ use Illuminate\Support\Facades\Auth;
 class CommitmentObserver
 {
     public function __construct(
+        private readonly GenerateCommitmentCodeAction $generateCode,
         private readonly RecordCommitmentStatusChangeAction $recordStatusChange,
     ) {}
+
+    /**
+     * El codigo se asigna aqui -no en la factory ni en el Resource- para
+     * que cualquier via de creacion (Filament, seeder, factory en lote,
+     * tinker) obtenga un codigo correlativo correcto. Hacerlo en un hook
+     * "afterMaking" de la factory rompe con creaciones en lote: Laravel
+     * arma primero N modelos en memoria (Factory::make x N) y recien
+     * despues los persiste, asi que todos verian el mismo "ultimo codigo"
+     * en BD y colisionarian. El evento `creating` en cambio se dispara
+     * justo antes del INSERT de cada modelo, uno a la vez.
+     */
+    public function creating(Commitment $commitment): void
+    {
+        if (blank($commitment->code)) {
+            $commitment->code = ($this->generateCode)();
+        }
+    }
 
     public function updating(Commitment $commitment): void
     {

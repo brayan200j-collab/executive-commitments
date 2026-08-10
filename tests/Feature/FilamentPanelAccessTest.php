@@ -21,6 +21,22 @@ class FilamentPanelAccessTest extends TestCase
         $this->get('/admin/login')->assertSuccessful();
     }
 
+    public function test_authenticated_user_can_view_dashboard_with_widgets(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/admin')->assertSuccessful();
+    }
+
+    public function test_dashboard_renders_with_seeded_data(): void
+    {
+        $user = User::factory()->create();
+        \App\Models\Commitment::factory()->count(3)->create();
+        \App\Models\Risk::factory()->critical()->create();
+
+        $this->actingAs($user)->get('/admin')->assertSuccessful();
+    }
+
     #[DataProvider('resourceIndexPages')]
     public function test_authenticated_user_can_view_resource_index(string $path): void
     {

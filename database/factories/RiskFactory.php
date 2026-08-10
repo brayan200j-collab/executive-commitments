@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Actions\Risks\GenerateRiskCodeAction;
 use App\Enums\RiskImpact;
 use App\Enums\RiskProbability;
 use App\Enums\RiskStatus;
@@ -21,17 +20,10 @@ class RiskFactory extends Factory
             'description' => fake()->sentence(14),
             'probability' => fake()->randomElement(RiskProbability::cases())->value,
             'impact' => fake()->randomElement(RiskImpact::cases())->value,
-            // 'level' lo calcula RiskObserver a partir de probability/impact.
+            // 'code' lo asigna RiskObserver::creating(), 'level' lo calcula RiskObserver::saving().
             'responsible_id' => User::factory(),
             'status' => fake()->randomElement(RiskStatus::cases())->value,
         ];
-    }
-
-    public function configure(): static
-    {
-        return $this->afterMaking(function (Risk $risk) {
-            $risk->code ??= app(GenerateRiskCodeAction::class)();
-        });
     }
 
     public function critical(): static

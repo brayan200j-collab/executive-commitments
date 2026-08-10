@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Actions\Commitments\GenerateCommitmentCodeAction;
 use App\Enums\CommitmentPriority;
 use App\Enums\CommitmentStatus;
 use App\Models\Commitment;
@@ -27,17 +26,6 @@ class CommitmentFactory extends Factory
             'progress_percentage' => fake()->numberBetween(0, 100),
             'evidence' => fake()->boolean(40) ? fake()->sentence() : null,
         ];
-    }
-
-    /**
-     * El codigo se asigna aqui (usando la misma Action que usa la app en
-     * produccion) para no duplicar la logica de secuencia en el seeder.
-     */
-    public function configure(): static
-    {
-        return $this->afterMaking(function (Commitment $commitment) {
-            $commitment->code ??= app(GenerateCommitmentCodeAction::class)();
-        });
     }
 
     public function overdue(): static
