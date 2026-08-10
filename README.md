@@ -1,58 +1,86 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Executive Commitments
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Módulo de seguimiento ejecutivo de reuniones, compromisos y riesgos, construido para la prueba técnica `DEV-CH-01` de Infinity Group SAS (iAxel Developer Challenge).
 
-## About Laravel
+## Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Laravel 13 · PHP 8.5
+- Filament 5 (panel de administración) + Livewire
+- SQLite
+- PHPUnit (suite de tests incluida en el scaffold de Laravel; no se agregó Pest para no sumar una dependencia adicional)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requisitos previos
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.5 con las extensiones: `mbstring`, `openssl`, `pdo_sqlite`, `sqlite3`, `fileinfo`, `curl`, `zip`, `gd`, `intl`.
+- Composer 2.
+- Node.js (opcional — solo se usa para los assets por defecto del scaffold de Laravel; el panel de administración usa los assets ya compilados que publica Filament).
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Instalación
 
 ```bash
-composer require laravel/boost --dev
+composer install
+cp .env.example .env
+php artisan key:generate
 
-php artisan boost:install
+# Base de datos SQLite
+touch database/database.sqlite   # en Windows: type nul > database\database.sqlite
+php artisan migrate --seed
+
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+La aplicación redirige `/` a `/admin` (el panel es el único punto de entrada real de este módulo).
 
-## Contributing
+## Credenciales demo
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Email | Password |
+|---|---|
+| `admin@iaxel.test` | `password` |
 
-## Code of Conduct
+El seeder también crea 4 usuarios adicionales (responsables ficticios) con la misma contraseña.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Estructura del dominio
 
-## Security Vulnerabilities
+```
+app/
+  Enums/            MeetingStatus, CommitmentPriority, CommitmentStatus,
+                     RiskProbability, RiskImpact, RiskLevel, RiskStatus
+                     (implementan HasLabel/HasColor/HasIcon de Filament)
+  Models/            Meeting, Commitment, CommitmentStatusHistory, Risk
+  Observers/         CommitmentObserver, RiskObserver
+  Actions/           Generacion de codigos, registro de auditoria,
+                     creacion de compromisos
+  Services/          RiskLevelResolver, DashboardMetricsService,
+                     ExecutiveSummaryServiceInterface + implementacion local
+  Policies/          MeetingPolicy, CommitmentPolicy, RiskPolicy
+  Filament/          Resources, Widgets y Pages del panel
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+La lógica de negocio vive en `Actions`/`Services`/`Observers`, no en los Resources de Filament (ver `DECISIONS.md`).
 
-## License
+## Reglas de negocio implementadas
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **Compromiso vencido**: no es una columna en base de datos. Es un atributo calculado (`Commitment::isOverdue`) y un scope de consulta (`Commitment::overdue()`) que comparan `due_date` contra la fecha actual y el estado. Nunca queda desincronizado.
+- **Riesgo crítico**: `RiskLevelResolver` aplica una matriz probabilidad × impacto (probabilidad alta + impacto alto → crítico, regla obligatoria de la prueba). Se recalcula automáticamente en `RiskObserver` cada vez que cambian probabilidad o impacto.
+- **Auditoría de compromisos**: `CommitmentObserver` registra en `commitment_status_histories` quién cambió el estado, cuándo, y los valores anterior/nuevo — sin importar si el cambio viene del formulario, una acción rápida de tabla o `tinker`.
+- **Códigos automáticos** (`COM-0001`, `RIS-0001`): se asignan en el evento `creating` de cada modelo (no en las factories ni en los formularios), para que cualquier vía de creación —incluyendo creación en lote— obtenga un código correlativo único.
+
+## Resumen ejecutivo (botón "Generar resumen ejecutivo")
+
+El dashboard incluye un botón que abre un modal con un resumen generado por `App\Services\ExecutiveSummary\LocalExecutiveSummaryService`, implementación de `ExecutiveSummaryServiceInterface` que redacta el resumen con reglas sobre los datos reales de la base de datos (sin llamar a ningún proveedor externo). Ver `DECISIONS.md` para cómo se conectaría un proveedor de IA externo sin tocar el resto del sistema.
+
+## Tests
+
+```bash
+php artisan test
+```
+
+32 tests cubren: acceso a cada módulo del panel, flujos completos de creación (compromiso y riesgo) vía Livewire, la matriz completa de `RiskLevelResolver`, los casos límite de `isOverdue`, `DashboardMetricsService`, `LocalExecutiveSummaryService`, y una regresión sobre generación de códigos en creación en lote.
+
+## Nota sobre el entorno de desarrollo local
+
+En la máquina donde se construyó este proyecto, el servidor embebido de PHP (`php artisan serve` / `php -S`) sobre PHP 8.5.9 presenta un bug reproducible al reflexionar atributos de Livewire (falla incluso en la página de login sin modificar, con `Undefined constant Attribute::IS_REPEATABLE`). Se confirmó que **no es un problema de esta aplicación**: la misma request funciona correctamente invocando el HTTP Kernel directamente o a través de la suite de tests (que es como se validó todo el desarrollo). Si `php artisan serve` fallara en tu máquina, usa Laravel Herd, Apache/Nginx apuntando a `public/`, o revisa si tu build de PHP 8.5 tiene el mismo problema.
+
+## DECISIONS.md
+
+Ver [`DECISIONS.md`](DECISIONS.md) para las decisiones de arquitectura y las respuestas a las preguntas de la sección 10 de la prueba.
