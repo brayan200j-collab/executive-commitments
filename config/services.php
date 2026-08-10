@@ -40,4 +40,10 @@ return [
         'model' => env('GEMINI_MODEL', 'gemini-flash-latest'),
     ],
 
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+        'organization' => env('OPENAI_ORGANIZATION'),
+        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+    ],
+
 ];

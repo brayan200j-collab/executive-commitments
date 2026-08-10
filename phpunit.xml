@@ -27,9 +27,10 @@
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
         <!-- Los tests nunca deben depender del .env real del desarrollador
-             ni de red/cuota externa: sin esta linea, si el .env local
-             tiene GEMINI_API_KEY, ExecutiveSummaryServiceInterface
-             resolveria a Gemini de verdad durante `php artisan test`. -->
+             ni de red/cuota externa: sin estas lineas, si el .env local
+             tiene OPENAI_API_KEY/GEMINI_API_KEY, ExecutiveSummaryServiceInterface
+             resolveria a un proveedor externo de verdad durante `php artisan test`. -->
+        <env name="OPENAI_API_KEY" value=""/>
         <env name="GEMINI_API_KEY" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

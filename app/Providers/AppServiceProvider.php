@@ -9,8 +9,8 @@ use App\Observers\RiskObserver;
 use App\Services\Dashboard\DashboardMetricsService;
 use App\Services\ExecutiveSummary\ExecutiveSummaryServiceInterface;
 use App\Services\ExecutiveSummary\FallbackExecutiveSummaryService;
-use App\Services\ExecutiveSummary\GeminiExecutiveSummaryService;
 use App\Services\ExecutiveSummary\LocalExecutiveSummaryService;
+use App\Services\ExecutiveSummary\OpenAiExecutiveSummaryService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,26 +21,32 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Unico lugar que decide que proveedor de resumen ejecutivo esta
-        // activo. Sin GEMINI_API_KEY en .env, se comporta exactamente
-        // igual que antes (solo el motor local). Con la key definida,
-        // intenta Gemini primero y cae al motor local si falla
+        // activo. Sin OPENAI_API_KEY en .env, se comporta exactamente
+        // igual que con solo el motor local. Con la key definida,
+        // intenta OpenAI primero y cae al motor local si falla
         // (FallbackExecutiveSummaryService), sin tocar nada en Filament.
+        //
+        // GeminiExecutiveSummaryService existe y esta probado (ver
+        // tests/Unit/GeminiExecutiveSummaryServiceTest.php) como prueba
+        // de que el contrato es intercambiable, pero no esta conectado
+        // aqui: el proveedor externo activo de este entregable es OpenAI.
         $this->app->bind(ExecutiveSummaryServiceInterface::class, function ($app) {
             $local = $app->make(LocalExecutiveSummaryService::class);
 
-            $apiKey = config('services.gemini.key');
+            $apiKey = config('services.openai.key');
 
             if (blank($apiKey)) {
                 return $local;
             }
 
-            $gemini = new GeminiExecutiveSummaryService(
+            $openAi = new OpenAiExecutiveSummaryService(
                 metrics: $app->make(DashboardMetricsService::class),
                 apiKey: $apiKey,
-                model: config('services.gemini.model'),
+                model: config('services.openai.model'),
+                organization: config('services.openai.organization'),
             );
 
-            return new FallbackExecutiveSummaryService(primary: $gemini, fallback: $local);
+            return new FallbackExecutiveSummaryService(primary: $openAi, fallback: $local);
         });
     }
 

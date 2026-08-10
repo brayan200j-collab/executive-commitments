@@ -3,6 +3,7 @@
 namespace App\Services\ExecutiveSummary;
 
 use App\Services\Dashboard\DashboardMetricsService;
+use App\Services\ExecutiveSummary\Concerns\BuildsExecutiveSummaryPrompt;
 use App\Services\ExecutiveSummary\DTO\ExecutiveSummaryResult;
 use App\Services\ExecutiveSummary\Exceptions\ExecutiveSummaryGenerationException;
 use Carbon\CarbonImmutable;
@@ -10,14 +11,16 @@ use Illuminate\Support\Facades\Http;
 use Throwable;
 
 /**
- * Implementacion externa del "Desafio de arquitectura para IA": redacta
- * el resumen ejecutivo con la API de Gemini (Google AI Studio), a partir
- * de los mismos datos que ya calcula DashboardMetricsService (no se
- * duplican consultas). No conoce Filament ni el Dashboard: solo cumple
- * ExecutiveSummaryServiceInterface, igual que LocalExecutiveSummaryService.
+ * Implementacion externa alternativa (no conectada por defecto, ver
+ * OpenAiExecutiveSummaryService): redacta el resumen ejecutivo con la
+ * API de Gemini (Google AI Studio). Se deja aqui, probada y funcional,
+ * como evidencia de que ExecutiveSummaryServiceInterface realmente
+ * permite intercambiar de proveedor sin tocar el resto del sistema.
  */
 class GeminiExecutiveSummaryService implements ExecutiveSummaryServiceInterface
 {
+    use BuildsExecutiveSummaryPrompt;
+
     private const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent';
 
     public function __construct(
@@ -33,19 +36,11 @@ class GeminiExecutiveSummaryService implements ExecutiveSummaryServiceInterface
                 ->retry(1, 200)
                 ->post(sprintf(self::ENDPOINT, $this->model).'?key='.$this->apiKey, [
                     'contents' => [
-                        ['parts' => [['text' => $this->buildPrompt()]]],
+                        ['parts' => [['text' => $this->buildExecutiveSummaryPrompt($this->metrics)]]],
                     ],
                     'generationConfig' => [
                         'responseMimeType' => 'application/json',
-                        'responseSchema' => [
-                            'type' => 'OBJECT',
-                            'properties' => [
-                                'headline' => ['type' => 'STRING'],
-                                'body' => ['type' => 'STRING'],
-                                'highlights' => ['type' => 'ARRAY', 'items' => ['type' => 'STRING']],
-                            ],
-                            'required' => ['headline', 'body', 'highlights'],
-                        ],
+                        'responseSchema' => $this->geminiSchema(),
                     ],
                 ]);
         } catch (Throwable $e) {
@@ -66,7 +61,7 @@ class GeminiExecutiveSummaryService implements ExecutiveSummaryServiceInterface
 
         $decoded = json_decode($text, true);
 
-        if (! is_array($decoded) || ! isset($decoded['headline'], $decoded['body'], $decoded['highlights'])) {
+        if (! $this->isValidExecutiveSummaryPayload($decoded)) {
             throw new ExecutiveSummaryGenerationException('Gemini devolvio un formato inesperado.');
         }
 
@@ -79,34 +74,22 @@ class GeminiExecutiveSummaryService implements ExecutiveSummaryServiceInterface
         );
     }
 
-    private function buildPrompt(): string
+    /**
+     * Gemini usa mayusculas en los tipos del schema (OBJECT/STRING/ARRAY),
+     * a diferencia del JSON Schema estandar que usa el resto de proveedores.
+     *
+     * @return array<string, mixed>
+     */
+    private function geminiSchema(): array
     {
-        $total = $this->metrics->totalCommitments();
-        $completed = $this->metrics->completedCommitments();
-        $overdue = $this->metrics->overdueCommitments();
-        $dueSoon = $this->metrics->dueSoonCommitments();
-        $activeRisks = $this->metrics->activeRisks();
-        $byStatus = $this->metrics->commitmentsByStatus();
-        $byPriority = $this->metrics->commitmentsByPriority();
-
-        return <<<PROMPT
-            Eres un asistente que redacta resúmenes ejecutivos corporativos en español,
-            para directivos que no tienen tiempo de revisar el detalle. Con los siguientes
-            datos reales de seguimiento de proyecto, responde EXCLUSIVAMENTE con el JSON
-            pedido por el schema (headline, body, highlights). No inventes cifras que no
-            aparezcan aquí.
-
-            Total de compromisos: {$total}
-            Compromisos cumplidos: {$completed}
-            Compromisos vencidos: {$overdue}
-            Compromisos que vencen en los próximos 7 días: {$dueSoon}
-            Riesgos activos: {$activeRisks}
-            Compromisos por estado: {$byStatus->toJson()}
-            Compromisos por prioridad: {$byPriority->toJson()}
-
-            headline: una frase corta (máx. 12 palabras) con el estado general.
-            body: 2-4 frases en tono ejecutivo explicando la situación.
-            highlights: entre 1 y 4 alertas o datos que un directivo debería notar primero.
-            PROMPT;
+        return [
+            'type' => 'OBJECT',
+            'properties' => [
+                'headline' => ['type' => 'STRING'],
+                'body' => ['type' => 'STRING'],
+                'highlights' => ['type' => 'ARRAY', 'items' => ['type' => 'STRING']],
+            ],
+            'required' => ['headline', 'body', 'highlights'],
+        ];
     }
 }

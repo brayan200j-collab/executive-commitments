@@ -51,7 +51,7 @@ app/
   Actions/           Generacion de codigos, registro de auditoria,
                      creacion de compromisos
   Services/          RiskLevelResolver, DashboardMetricsService,
-                     ExecutiveSummaryServiceInterface + Local/Gemini/Fallback
+                     ExecutiveSummaryServiceInterface + Local/OpenAI/Gemini/Fallback
   Policies/          MeetingPolicy, CommitmentPolicy, RiskPolicy
   Filament/          Resources, Widgets y Pages del panel
 ```
@@ -67,22 +67,24 @@ La lógica de negocio vive en `Actions`/`Services`/`Observers`, no en los Resour
 
 ## Resumen ejecutivo (botón "Generar resumen ejecutivo")
 
-El dashboard incluye un botón que abre un modal con un resumen generado a través de `ExecutiveSummaryServiceInterface`. Hay dos implementaciones:
+El dashboard incluye un botón que abre un modal con un resumen generado a través de `ExecutiveSummaryServiceInterface`. Hay tres implementaciones:
 
 - **`LocalExecutiveSummaryService`** (por defecto): redacta el resumen con reglas sobre los datos reales, sin llamar a ningún proveedor externo. No requiere configuración.
-- **`GeminiExecutiveSummaryService`** (opcional): le pide el resumen a la API de Gemini (Google AI Studio) con salida JSON estructurada.
+- **`OpenAiExecutiveSummaryService`** (proveedor externo activo): le pide el resumen a la Chat Completions API de OpenAI, con salida JSON estructurada (`response_format: json_schema`).
+- **`GeminiExecutiveSummaryService`** (alternativa probada, no conectada por defecto): mismo patrón contra la API de Gemini. Se deja en el repo como evidencia de que el contrato es realmente intercambiable, no solo en la teoría.
 
-### Activar Gemini
+### Activar OpenAI
 
-1. Consigue una API key gratuita en **aistudio.google.com/apikey**.
+1. Consigue una API key en **platform.openai.com/api-keys** (requiere tener créditos/billing activo en la cuenta — la API no tiene capa gratuita).
 2. Agrega en tu `.env`:
    ```
-   GEMINI_API_KEY=tu-api-key
-   GEMINI_MODEL=gemini-flash-latest
+   OPENAI_API_KEY=tu-api-key
+   OPENAI_ORGANIZATION=            # opcional
+   OPENAI_MODEL=gpt-4o-mini
    ```
-3. Listo — no hay que tocar código. `AppServiceProvider` detecta la key y activa Gemini automáticamente, envuelto en `FallbackExecutiveSummaryService`: si la llamada a Gemini falla (sin internet, key inválida, rate limit), cae solo al motor local y el usuario nunca ve un error. Sin la key, el comportamiento es exactamente el mismo de antes (solo motor local).
+3. Listo — no hay que tocar código. `AppServiceProvider` detecta la key y activa OpenAI automáticamente, envuelto en `FallbackExecutiveSummaryService`: si la llamada falla (sin internet, key inválida, sin créditos, rate limit), cae solo al motor local y el usuario nunca ve un error. Sin la key, el comportamiento es exactamente el mismo de antes (solo motor local).
 
-Ver `DECISIONS.md` para el detalle de cómo está armado el contrato y cómo se conectaría otro proveedor (ej. OpenAI) siguiendo el mismo patrón.
+Ambos proveedores externos comparten el prompt y el schema de salida (`app/Services/ExecutiveSummary/Concerns/BuildsExecutiveSummaryPrompt.php`), para no duplicar esa lógica. Ver `DECISIONS.md` para el detalle de cómo está armado el contrato.
 
 ## Tests
 
@@ -90,7 +92,7 @@ Ver `DECISIONS.md` para el detalle de cómo está armado el contrato y cómo se 
 php artisan test
 ```
 
-42 tests cubren: acceso a cada módulo del panel, flujos completos de creación (compromiso y riesgo) vía Livewire, edición de cada recurso, filtros de tabla, la matriz completa de `RiskLevelResolver`, los casos límite de `isOverdue`, `DashboardMetricsService`, `LocalExecutiveSummaryService`, `GeminiExecutiveSummaryService`, `FallbackExecutiveSummaryService` y el binding condicional de `ExecutiveSummaryServiceInterface` (con `Http::fake()`, sin llamadas reales a red ni dependencia de la `GEMINI_API_KEY` del entorno), y una regresión sobre generación de códigos en creación en lote.
+46 tests cubren: acceso a cada módulo del panel, flujos completos de creación (compromiso y riesgo) vía Livewire, edición de cada recurso, filtros de tabla, la matriz completa de `RiskLevelResolver`, los casos límite de `isOverdue`, `DashboardMetricsService`, `LocalExecutiveSummaryService`, `OpenAiExecutiveSummaryService`, `GeminiExecutiveSummaryService`, `FallbackExecutiveSummaryService` y el binding condicional de `ExecutiveSummaryServiceInterface` (con `Http::fake()`, sin llamadas reales a red ni dependencia de las API keys del entorno), y una regresión sobre generación de códigos en creación en lote.
 
 
 ## DECISIONS.md
