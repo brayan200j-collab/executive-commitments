@@ -2,24 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
-     * Seed the application's database.
+     * OJO: sin WithoutModelEvents. Los observers (codigo automatico,
+     * nivel de riesgo, auditoria) son parte del comportamiento que este
+     * seeder necesita ejercitar, no un efecto secundario a evitar.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            UserSeeder::class,
+            MeetingSeeder::class,
+            CommitmentSeeder::class,
+            RiskSeeder::class,
         ]);
     }
 }
