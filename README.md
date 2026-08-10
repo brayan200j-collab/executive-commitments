@@ -92,9 +92,6 @@ php artisan test
 
 42 tests cubren: acceso a cada módulo del panel, flujos completos de creación (compromiso y riesgo) vía Livewire, edición de cada recurso, filtros de tabla, la matriz completa de `RiskLevelResolver`, los casos límite de `isOverdue`, `DashboardMetricsService`, `LocalExecutiveSummaryService`, `GeminiExecutiveSummaryService`, `FallbackExecutiveSummaryService` y el binding condicional de `ExecutiveSummaryServiceInterface` (con `Http::fake()`, sin llamadas reales a red ni dependencia de la `GEMINI_API_KEY` del entorno), y una regresión sobre generación de códigos en creación en lote.
 
-## Nota sobre el entorno de desarrollo local
-
-En la máquina donde se construyó este proyecto, el servidor embebido de PHP (`php artisan serve` / `php -S`) sobre PHP 8.5.9 presenta un bug reproducible al reflexionar atributos de Livewire (falla incluso en la página de login sin modificar, con `Undefined constant Attribute::IS_REPEATABLE`). Se confirmó que **no es un problema de esta aplicación**: la misma request funciona correctamente invocando el HTTP Kernel directamente o a través de la suite de tests (que es como se validó todo el desarrollo). Si `php artisan serve` fallara en tu máquina, usa Laravel Herd, Apache/Nginx apuntando a `public/`, o revisa si tu build de PHP 8.5 tiene el mismo problema.
 
 ## DECISIONS.md
 
