@@ -11,6 +11,12 @@ class MeetingSeeder extends Seeder
 {
     public function run(): void
     {
+        // Evita duplicar datos demo si el pipeline de deploy vuelve a
+        // correr los seeders en cada release.
+        if (Meeting::query()->exists()) {
+            return;
+        }
+
         $users = User::all();
 
         Meeting::factory()

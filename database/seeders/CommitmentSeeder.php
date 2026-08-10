@@ -12,6 +12,12 @@ class CommitmentSeeder extends Seeder
 {
     public function run(): void
     {
+        // Evita duplicar datos demo si el pipeline de deploy vuelve a
+        // correr los seeders en cada release.
+        if (Commitment::query()->exists()) {
+            return;
+        }
+
         $meetings = Meeting::all();
         $users = User::all();
 

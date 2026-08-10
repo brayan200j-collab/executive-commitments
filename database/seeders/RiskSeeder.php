@@ -13,6 +13,12 @@ class RiskSeeder extends Seeder
 {
     public function run(): void
     {
+        // Evita duplicar datos demo si el pipeline de deploy vuelve a
+        // correr los seeders en cada release.
+        if (Risk::query()->exists()) {
+            return;
+        }
+
         $users = User::all();
 
         // Cubre toda la matriz probabilidad x impacto al menos una vez.
