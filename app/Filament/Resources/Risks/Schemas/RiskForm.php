@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Risks\Schemas;
 
 use App\Enums\RiskImpact;
+use App\Enums\RiskLevel;
 use App\Enums\RiskProbability;
 use App\Enums\RiskStatus;
 use Filament\Forms\Components\Select;
@@ -49,7 +50,11 @@ class RiskForm
                             ->disabled()
                             ->dehydrated(false)
                             ->visibleOn('edit')
-                            ->formatStateUsing(fn ($state) => $state?->getLabel())
+                            ->formatStateUsing(fn ($state) => match (true) {
+                                $state instanceof RiskLevel => $state->getLabel(),
+                                is_string($state) && $state !== '' => RiskLevel::from($state)->getLabel(),
+                                default => null,
+                            })
                             ->helperText('Se recalcula automáticamente a partir de probabilidad e impacto.'),
                         Select::make('responsible_id')
                             ->label('Responsable')
