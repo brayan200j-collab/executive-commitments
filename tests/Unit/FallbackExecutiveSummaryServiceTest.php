@@ -27,7 +27,7 @@ class FallbackExecutiveSummaryServiceTest extends TestCase
         {
             public function generate(): ExecutiveSummaryResult
             {
-                throw new RuntimeException('Gemini no disponible');
+                throw new RuntimeException('Proveedor primario no disponible');
             }
         };
         $fallback = $this->fakeProvider('secundario');

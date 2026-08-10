@@ -5,8 +5,8 @@ namespace App\Services\ExecutiveSummary\Concerns;
 use App\Services\Dashboard\DashboardMetricsService;
 
 /**
- * Prompt compartido entre proveedores externos (Gemini, OpenAI, el que
- * siga). Vive en un solo lugar para que agregar un proveedor nuevo no
+ * Prompt compartido entre proveedores externos de resumen ejecutivo.
+ * Vive en un solo lugar para que agregar o cambiar de proveedor no
  * implique reescribir como se le explican los datos al modelo.
  */
 trait BuildsExecutiveSummaryPrompt

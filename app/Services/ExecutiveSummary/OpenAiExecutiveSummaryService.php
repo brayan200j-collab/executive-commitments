@@ -13,10 +13,10 @@ use Throwable;
 /**
  * Proveedor externo conectado por defecto para el "Desafio de
  * arquitectura para IA" (Chat Completions API de OpenAI, con salida
- * JSON estructurada via response_format: json_schema). Igual que
- * GeminiExecutiveSummaryService, reusa los datos de
- * DashboardMetricsService y no conoce Filament ni el Dashboard: solo
- * cumple ExecutiveSummaryServiceInterface.
+ * JSON estructurada via response_format: json_schema). Reusa los datos
+ * de DashboardMetricsService y no conoce Filament ni el Dashboard: solo
+ * cumple ExecutiveSummaryServiceInterface, igual que
+ * LocalExecutiveSummaryService.
  */
 class OpenAiExecutiveSummaryService implements ExecutiveSummaryServiceInterface
 {

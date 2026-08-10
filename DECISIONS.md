@@ -29,7 +29,7 @@ El "Desafío de arquitectura para IA" ya está resuelto con esto en mente, y de 
 3. `App\Services\ExecutiveSummary\FallbackExecutiveSummaryService` es un decorador del mismo contrato: intenta el proveedor primario y, si lanza excepción, cae automáticamente al motor local (`report()` deja el fallo en los logs, pero el usuario del panel nunca ve un error).
 4. `AppServiceProvider::register()` es el único lugar que decide: sin `OPENAI_API_KEY` en `.env`, se bindea solo `LocalExecutiveSummaryService` (comportamiento exacto de antes); con la key presente, bindea `FallbackExecutiveSummaryService` envolviendo OpenAI + local.
 
-Como prueba adicional de que el contrato es realmente intercambiable (y no solo en la teoría), `App\Services\ExecutiveSummary\GeminiExecutiveSummaryService` implementa el mismo contrato contra la API de Gemini, con su propia suite de tests — pero no está conectada en `AppServiceProvider` (el proveedor externo activo de este entregable es OpenAI). Pasar de uno a otro, o agregar un tercero, es cambiar una llamada dentro del `bind()`. Nada en `App\Filament\Pages\Dashboard`, en la vista del modal, ni en ningún test que use el contrato necesitó cambiar al agregar o quitar un proveedor.
+Agregar un proveedor distinto en el futuro (o volver a cambiar de proveedor) es implementar una clase nueva contra `ExecutiveSummaryServiceInterface` y cambiar una llamada dentro del `bind()` de `AppServiceProvider`. Nada en `App\Filament\Pages\Dashboard`, en la vista del modal, ni en ningún test que use el contrato necesitaría cambiar.
 
 ## ¿Qué harías si este módulo tuviera 100.000 compromisos?
 

@@ -7,7 +7,7 @@ use Throwable;
 
 /**
  * Decorador sobre ExecutiveSummaryServiceInterface: intenta el proveedor
- * primario (ej. Gemini) y, ante cualquier fallo (red, credenciales,
+ * primario (ej. OpenAI) y, ante cualquier fallo (red, credenciales,
  * formato de respuesta), cae automaticamente al secundario sin que el
  * usuario del panel vea un error. El fallo se reporta a los logs para
  * que no quede invisible.

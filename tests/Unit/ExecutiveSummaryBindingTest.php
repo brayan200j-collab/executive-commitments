@@ -8,11 +8,10 @@ use App\Services\ExecutiveSummary\LocalExecutiveSummaryService;
 use Tests\TestCase;
 
 /**
- * Regresion: phpunit.xml fuerza OPENAI_API_KEY="" (y GEMINI_API_KEY="")
- * para que la suite nunca dependa del .env real del desarrollador ni de
- * red externa. Este test fija el contrato del binding en
- * AppServiceProvider para que un futuro cambio ahi no rompa ese
- * aislamiento sin que salte un test.
+ * Regresion: phpunit.xml fuerza OPENAI_API_KEY="" para que la suite
+ * nunca dependa del .env real del desarrollador ni de red externa. Este
+ * test fija el contrato del binding en AppServiceProvider para que un
+ * futuro cambio ahi no rompa ese aislamiento sin que salte un test.
  */
 class ExecutiveSummaryBindingTest extends TestCase
 {

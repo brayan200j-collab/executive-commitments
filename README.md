@@ -51,7 +51,7 @@ app/
   Actions/           Generacion de codigos, registro de auditoria,
                      creacion de compromisos
   Services/          RiskLevelResolver, DashboardMetricsService,
-                     ExecutiveSummaryServiceInterface + Local/OpenAI/Gemini/Fallback
+                     ExecutiveSummaryServiceInterface + Local/OpenAI/Fallback
   Policies/          MeetingPolicy, CommitmentPolicy, RiskPolicy
   Filament/          Resources, Widgets y Pages del panel
 ```
@@ -67,11 +67,10 @@ La lógica de negocio vive en `Actions`/`Services`/`Observers`, no en los Resour
 
 ## Resumen ejecutivo (botón "Generar resumen ejecutivo")
 
-El dashboard incluye un botón que abre un modal con un resumen generado a través de `ExecutiveSummaryServiceInterface`. Hay tres implementaciones:
+El dashboard incluye un botón que abre un modal con un resumen generado a través de `ExecutiveSummaryServiceInterface`. Hay dos implementaciones:
 
 - **`LocalExecutiveSummaryService`** (por defecto): redacta el resumen con reglas sobre los datos reales, sin llamar a ningún proveedor externo. No requiere configuración.
 - **`OpenAiExecutiveSummaryService`** (proveedor externo activo): le pide el resumen a la Chat Completions API de OpenAI, con salida JSON estructurada (`response_format: json_schema`).
-- **`GeminiExecutiveSummaryService`** (alternativa probada, no conectada por defecto): mismo patrón contra la API de Gemini. Se deja en el repo como evidencia de que el contrato es realmente intercambiable, no solo en la teoría.
 
 ### Activar OpenAI
 
@@ -84,7 +83,7 @@ El dashboard incluye un botón que abre un modal con un resumen generado a trav�
    ```
 3. Listo — no hay que tocar código. `AppServiceProvider` detecta la key y activa OpenAI automáticamente, envuelto en `FallbackExecutiveSummaryService`: si la llamada falla (sin internet, key inválida, sin créditos, rate limit), cae solo al motor local y el usuario nunca ve un error. Sin la key, el comportamiento es exactamente el mismo de antes (solo motor local).
 
-Ambos proveedores externos comparten el prompt y el schema de salida (`app/Services/ExecutiveSummary/Concerns/BuildsExecutiveSummaryPrompt.php`), para no duplicar esa lógica. Ver `DECISIONS.md` para el detalle de cómo está armado el contrato.
+Ver `DECISIONS.md` para el detalle de cómo está armado el contrato y cómo se sustituiría por otro proveedor sin acoplarlo al resto del sistema.
 
 ## Tests
 
@@ -92,7 +91,7 @@ Ambos proveedores externos comparten el prompt y el schema de salida (`app/Servi
 php artisan test
 ```
 
-46 tests cubren: acceso a cada módulo del panel, flujos completos de creación (compromiso y riesgo) vía Livewire, edición de cada recurso, filtros de tabla, la matriz completa de `RiskLevelResolver`, los casos límite de `isOverdue`, `DashboardMetricsService`, `LocalExecutiveSummaryService`, `OpenAiExecutiveSummaryService`, `GeminiExecutiveSummaryService`, `FallbackExecutiveSummaryService` y el binding condicional de `ExecutiveSummaryServiceInterface` (con `Http::fake()`, sin llamadas reales a red ni dependencia de las API keys del entorno), y una regresión sobre generación de códigos en creación en lote.
+43 tests cubren: acceso a cada módulo del panel, flujos completos de creación (compromiso y riesgo) vía Livewire, edición de cada recurso, filtros de tabla, la matriz completa de `RiskLevelResolver`, los casos límite de `isOverdue`, `DashboardMetricsService`, `LocalExecutiveSummaryService`, `OpenAiExecutiveSummaryService`, `FallbackExecutiveSummaryService` y el binding condicional de `ExecutiveSummaryServiceInterface` (con `Http::fake()`, sin llamadas reales a red ni dependencia de la `OPENAI_API_KEY` del entorno), y una regresión sobre generación de códigos en creación en lote.
 
 
 ## DECISIONS.md

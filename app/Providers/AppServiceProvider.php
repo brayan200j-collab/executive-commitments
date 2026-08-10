@@ -25,11 +25,6 @@ class AppServiceProvider extends ServiceProvider
         // igual que con solo el motor local. Con la key definida,
         // intenta OpenAI primero y cae al motor local si falla
         // (FallbackExecutiveSummaryService), sin tocar nada en Filament.
-        //
-        // GeminiExecutiveSummaryService existe y esta probado (ver
-        // tests/Unit/GeminiExecutiveSummaryServiceTest.php) como prueba
-        // de que el contrato es intercambiable, pero no esta conectado
-        // aqui: el proveedor externo activo de este entregable es OpenAI.
         $this->app->bind(ExecutiveSummaryServiceInterface::class, function ($app) {
             $local = $app->make(LocalExecutiveSummaryService::class);
 
