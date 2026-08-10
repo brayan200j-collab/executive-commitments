@@ -90,7 +90,7 @@ Ver `DECISIONS.md` para el detalle de cómo está armado el contrato y cómo se 
 php artisan test
 ```
 
-40 tests cubren: acceso a cada módulo del panel, flujos completos de creación (compromiso y riesgo) vía Livewire, edición de cada recurso, filtros de tabla, la matriz completa de `RiskLevelResolver`, los casos límite de `isOverdue`, `DashboardMetricsService`, `LocalExecutiveSummaryService`, `GeminiExecutiveSummaryService` y `FallbackExecutiveSummaryService` (con `Http::fake()`, sin llamadas reales a red), y una regresión sobre generación de códigos en creación en lote.
+42 tests cubren: acceso a cada módulo del panel, flujos completos de creación (compromiso y riesgo) vía Livewire, edición de cada recurso, filtros de tabla, la matriz completa de `RiskLevelResolver`, los casos límite de `isOverdue`, `DashboardMetricsService`, `LocalExecutiveSummaryService`, `GeminiExecutiveSummaryService`, `FallbackExecutiveSummaryService` y el binding condicional de `ExecutiveSummaryServiceInterface` (con `Http::fake()`, sin llamadas reales a red ni dependencia de la `GEMINI_API_KEY` del entorno), y una regresión sobre generación de códigos en creación en lote.
 
 ## Nota sobre el entorno de desarrollo local
 
