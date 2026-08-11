@@ -35,3 +35,6 @@ Thumbs.db
 /extras
 /cacert.pem
 /skills-lock.json
+
+# Documentacion generada para consulta personal, no es parte del codigo fuente
+/Executive-Commitments-Documentacion-Tecnica.pdf
