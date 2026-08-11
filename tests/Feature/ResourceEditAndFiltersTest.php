@@ -62,4 +62,34 @@ class ResourceEditAndFiltersTest extends TestCase
             ->filterTable('due_soon')
             ->assertCountTableRecords(1);
     }
+
+    /**
+     * El listado debe quedar ordenado por codigo ascendente (COM-0001,
+     * COM-0002...) y mantener ese orden al cambiar de pagina, sin
+     * importar fecha limite, estado o prioridad de cada compromiso.
+     */
+    public function test_commitments_list_is_sorted_by_code_ascending_across_pages(): void
+    {
+        $user = User::factory()->create();
+
+        // Fechas/estado en desorden a proposito: si el orden dependiera
+        // de otra columna por accidente, este test lo detectaria.
+        $commitments = Commitment::factory()
+            ->count(15)
+            ->sequence(
+                ['due_date' => now()->addWeeks(3), 'status' => CommitmentStatus::Pendiente->value],
+                ['due_date' => now()->subWeek(), 'status' => CommitmentStatus::Cumplido->value],
+                ['due_date' => now()->addDay(), 'status' => CommitmentStatus::Bloqueado->value],
+            )
+            ->create();
+
+        $orderedByCode = $commitments->sortBy('code')->values();
+
+        $this->actingAs($user);
+
+        Livewire::test(\App\Filament\Resources\Commitments\Pages\ListCommitments::class)
+            ->assertCanSeeTableRecords($orderedByCode->take(10), inOrder: true)
+            ->call('gotoPage', 2)
+            ->assertCanSeeTableRecords($orderedByCode->slice(10, 5), inOrder: true);
+    }
 }

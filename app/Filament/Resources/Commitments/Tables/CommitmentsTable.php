@@ -73,7 +73,12 @@ class CommitmentsTable
                     ->label('Próximos a vencer (7 días)')
                     ->query(fn ($query) => $query->dueSoon()),
             ])
-            ->defaultSort('due_date')
+            // Orden por defecto: codigo ascendente (COM-0001, COM-0002...).
+            // Al ser zero-padded a 4 digitos, el orden alfabetico de
+            // "code" coincide con el orden numerico hasta 9999 registros,
+            // y se mantiene consistente entre paginas (Filament ordena
+            // en la consulta antes de paginar, no solo la pagina visible).
+            ->defaultSort('code')
             ->recordActions([
                 EditAction::make(),
             ])
