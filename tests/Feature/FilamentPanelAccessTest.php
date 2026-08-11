@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Commitment;
+use App\Models\Risk;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -31,8 +33,8 @@ class FilamentPanelAccessTest extends TestCase
     public function test_dashboard_renders_with_seeded_data(): void
     {
         $user = User::factory()->create();
-        \App\Models\Commitment::factory()->count(3)->create();
-        \App\Models\Risk::factory()->critical()->create();
+        Commitment::factory()->count(3)->create();
+        Risk::factory()->critical()->create();
 
         $this->actingAs($user)->get('/admin')->assertSuccessful();
     }

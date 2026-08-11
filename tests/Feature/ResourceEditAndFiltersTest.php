@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Enums\CommitmentStatus;
 use App\Filament\Resources\Commitments\CommitmentResource;
+use App\Filament\Resources\Commitments\Pages\EditCommitment;
+use App\Filament\Resources\Commitments\Pages\ListCommitments;
+use App\Filament\Resources\Commitments\RelationManagers\StatusHistoriesRelationManager;
 use App\Filament\Resources\Meetings\MeetingResource;
 use App\Filament\Resources\Risks\RiskResource;
 use App\Models\Commitment;
@@ -41,8 +44,8 @@ class ResourceEditAndFiltersTest extends TestCase
         $this->actingAs($user);
 
         Livewire::test(
-            \App\Filament\Resources\Commitments\RelationManagers\StatusHistoriesRelationManager::class,
-            ['ownerRecord' => $commitment, 'pageClass' => \App\Filament\Resources\Commitments\Pages\EditCommitment::class]
+            StatusHistoriesRelationManager::class,
+            ['ownerRecord' => $commitment, 'pageClass' => EditCommitment::class]
         )->assertSuccessful();
     }
 
@@ -55,7 +58,7 @@ class ResourceEditAndFiltersTest extends TestCase
 
         $this->actingAs($user);
 
-        Livewire::test(\App\Filament\Resources\Commitments\Pages\ListCommitments::class)
+        Livewire::test(ListCommitments::class)
             ->filterTable('overdue')
             ->assertCountTableRecords(1)
             ->resetTableFilters()
@@ -87,7 +90,7 @@ class ResourceEditAndFiltersTest extends TestCase
 
         $this->actingAs($user);
 
-        Livewire::test(\App\Filament\Resources\Commitments\Pages\ListCommitments::class)
+        Livewire::test(ListCommitments::class)
             ->assertCanSeeTableRecords($orderedByCode->take(10), inOrder: true)
             ->call('gotoPage', 2)
             ->assertCanSeeTableRecords($orderedByCode->slice(10, 5), inOrder: true);
